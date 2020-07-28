@@ -20,8 +20,9 @@ metadata {
 		command "raiseCoolSetpoint"
 		command "poll"
 
-		fingerprint deviceId: "0x08", inClusters: "0x43,0x40,0x44,0x31,0x80,0x85,0x60"
-		fingerprint mfr:"0098", prod:"6401", model:"0107", deviceJoinName: "2Gig CT100 Programmable Thermostat"
+		fingerprint deviceId: "0x08", inClusters: "0x43,0x40,0x44,0x31,0x80,0x85,0x60", deviceJoinName: "Thermostat"
+		fingerprint mfr:"0098", prod:"6401", model:"0107", deviceJoinName: "2Gig Thermostat" //2Gig CT100 Programmable Thermostat
+		fingerprint mfr:"0098", prod:"6501", model:"000C", deviceJoinName: "Iris Thermostat" //Radio Thermostat CT101
 	}
 
 	tiles {
@@ -355,6 +356,9 @@ def zwaveEvent(physicalgraph.zwave.commands.thermostatfanmodev3.ThermostatFanMod
 
 def zwaveEvent(physicalgraph.zwave.commands.basicv1.BasicReport cmd) {
 	log.debug "Zwave BasicReport: $cmd"
+	if (cmd.value == 255) {
+		response(zwave.batteryV1.batteryGet().format())
+	}
 }
 
 def zwaveEvent(physicalgraph.zwave.commands.batteryv1.BatteryReport cmd) {
@@ -624,7 +628,8 @@ def ping() {
 def switchMode() {
 	def currentMode = device.currentValue("thermostatMode")
 	def supportedModes = state.supportedModes
-	if (supportedModes) {
+	// Old version of supportedModes was as string, make sure it gets updated
+	if (supportedModes && supportedModes.size() && supportedModes[0].size() > 1) {
 		def next = { supportedModes[supportedModes.indexOf(it) + 1] ?: supportedModes[0] }
 		def nextMode = next(currentMode)
 		runIn(2, "setGetThermostatMode", [data: [nextMode: nextMode], overwrite: true])
@@ -636,7 +641,8 @@ def switchMode() {
 
 def switchToMode(nextMode) {
 	def supportedModes = state.supportedModes
-	if (supportedModes) {
+	// Old version of supportedModes was as string, make sure it gets updated
+	if (supportedModes && supportedModes.size() && supportedModes[0].size() > 1) {
 		if (supportedModes.contains(nextMode)) {
 			runIn(2, "setGetThermostatMode", [data: [nextMode: nextMode], overwrite: true])
 		} else {
@@ -657,7 +663,8 @@ def getSupportedModes() {
 def switchFanMode() {
 	def currentMode = device.currentValue("thermostatFanMode")
 	def supportedFanModes = state.supportedFanModes
-	if (supportedFanModes) {
+	// Old version of supportedFanModes was as string, make sure it gets updated
+	if (supportedFanModes && supportedFanModes.size() && supportedFanModes[0].size() > 1) {
 		def next = { supportedFanModes[supportedFanModes.indexOf(it) + 1] ?: supportedFanModes[0] }
 		def nextMode = next(currentMode)
 		runIn(2, "setGetThermostatFanMode", [data: [nextMode: nextMode], overwrite: true])
@@ -669,7 +676,8 @@ def switchFanMode() {
 
 def switchToFanMode(nextMode) {
 	def supportedFanModes = state.supportedFanModes
-	if (supportedFanModes) {
+	// Old version of supportedFanModes was as string, make sure it gets updated
+	if (supportedFanModes && supportedFanModes.size() && supportedFanModes[0].size() > 1) {
 		if (supportedFanModes.contains(nextMode)) {
 			runIn(2, "setGetThermostatFanMode", [data: [nextMode: nextMode], overwrite: true])
 		} else {
